@@ -19,6 +19,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	maunium.net/go/mautrix v0.23.3-0.20250405234116-e675a3c09c38
 )
+replace maunium.net/go/mautrix => ./mautrix-go/
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
