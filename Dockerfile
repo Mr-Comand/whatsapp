@@ -2,6 +2,7 @@ FROM golang:1-alpine3.22 AS builder
 
 RUN apk add --no-cache git ca-certificates build-base su-exec olm-dev
 
+COPY ./mautrix-go /build/mautrix-go
 COPY . /build
 WORKDIR /build
 RUN ./build.sh
