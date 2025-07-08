@@ -69,7 +69,7 @@ func (wa *WhatsAppConnector) LoadUserLogin(ctx context.Context, login *bridgev2.
 	if w.Device != nil {
 		log := w.UserLogin.Log.With().Str("component", "whatsmeow").Logger()
 		w.Client = whatsmeow.NewClient(w.Device, waLog.Zerolog(log))
-		w.Client.AddEventHandler(w.handleWAEvent)
+		w.Client.AddEventHandlerWithSuccessStatus(w.handleWAEvent)
 		if bridgev2.PortalEventBuffer == 0 {
 			w.Client.SynchronousAck = true
 			w.Client.EnableDecryptedEventBuffer = true
@@ -193,9 +193,13 @@ func (wa *WhatsAppClient) Connect(ctx context.Context) {
 	wa.startLoops()
 	wa.Client.BackgroundEventCtx = wa.Main.Bridge.BackgroundCtx
 	if err := wa.Client.Connect(); err != nil {
+		zerolog.Ctx(ctx).Err(err).Msg("Failed to connect to WhatsApp")
 		state := status.BridgeState{
 			StateEvent: status.StateUnknownError,
 			Error:      WAConnectionFailed,
+			Info: map[string]any{
+				"go_error": err.Error(),
+			},
 		}
 		wa.UserLogin.BridgeState.Send(state)
 	}
@@ -226,7 +230,7 @@ func (wa *WhatsAppClient) ConnectBackground(ctx context.Context, params *bridgev
 	}
 	wa.Client.BackgroundEventCtx = wa.Main.Bridge.BackgroundCtx
 	wa.offlineSyncWaiter = make(chan error)
-	wa.Main.firstClientConnectOnce.Do(wa.Main.onFirstClientConnect)
+	wa.Main.backgroundConnectOnce.Do(wa.Main.onFirstBackgroundConnect)
 	if err := wa.Main.updateProxy(ctx, wa.Client, false); err != nil {
 		zerolog.Ctx(ctx).Err(err).Msg("Failed to update proxy")
 	}
